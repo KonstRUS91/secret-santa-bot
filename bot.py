@@ -437,5 +437,106 @@ dp.include_router(router)
 async def main():
     await dp.start_polling(bot)
 
+# === АДМИНСКИЕ КОМАНДЫ ===
+ВАШ_TELEGRAM_ID = 5194912828  # ← ЗАМЕНИ НА СВОЙ!
+
+def is_admin(user_id: int) -> bool:
+    return user_id == ВАШ_TELEGRAM_ID
+
+@router.message(Command("admin_game_list"))
+async def admin_game_list(message: Message):
+    if not is_admin(message.from_user.id):
+        return
+    conn = sqlite3.connect("santa.db")
+    c = conn.cursor()
+    c.execute("SELECT game_code, creator_id FROM games")
+    games = c.fetchall()
+    conn.close()
+    if not games:
+        await message.answer("📭 Нет активных игр.")
+        return
+    text = "🎮 Список игр:\n\n"
+    for game_code, creator_id in games:
+        text += f"• Код: <code>{game_code}</code> | Создатель: <code>{creator_id}</code>\n"
+    await message.answer(text, parse_mode="HTML")
+
+@router.message(Command("admin_del_game"))
+async def admin_del_game(message: Message):
+    if not is_admin(message.from_user.id):
+        return
+    parts = message.text.split()
+    if len(parts) < 2:
+        await message.answer("Использование: /admin_del_game <код_игры>")
+        return
+    game_code = parts[1].strip().upper()
+    conn = sqlite3.connect("santa.db")
+    c = conn.cursor()
+    # Удаляем участников игры
+    c.execute("DELETE FROM participants WHERE game_code = ?", (game_code,))
+    # Удаляем саму игру
+    c.execute("DELETE FROM games WHERE game_code = ?", (game_code,))
+    deleted = c.rowcount > 0
+    conn.commit()
+    conn.close()
+    if deleted:
+        await message.answer(f"✅ Игра <code>{game_code}</code> удалена.", parse_mode="HTML")
+    else:
+        await message.answer(f"❌ Игра <code>{game_code}</code> не найдена.", parse_mode="HTML")
+
+@router.message(Command("admin_user_list"))
+async def admin_user_list(message: Message):
+    if not is_admin(message.from_user.id):
+        return
+    conn = sqlite3.connect("santa.db")
+    c = conn.cursor()
+    c.execute("SELECT user_id, full_name, username, game_code FROM participants")
+    users = c.fetchall()
+    conn.close()
+    if not users:
+        await message.answer("📭 Нет участников.")
+        return
+    text = "👥 Список пользователей:\n\n"
+    for uid, name, username, game_code in users:
+        name_display = name or f"ID{uid}"
+        if username:
+            name_display += f" (@{username})"
+        text += f"• {name_display}\n  Игра: <code>{game_code}</code>\n\n"
+    if len(text) > 4096:
+        text = text[:4093] + "..."
+    await message.answer(text, parse_mode="HTML")
+
+@router.message(Command("admin_del_user"))
+async def admin_del_user(message: Message):
+    if not is_admin(message.from_user.id):
+        return
+    parts = message.text.split(maxsplit=1)
+    if len(parts) < 2:
+        await message.answer("Использование: /admin_del_user <ник_или_ID>")
+        return
+    target = parts[1].strip()
+    conn = sqlite3.connect("santa.db")
+    c = conn.cursor()
+    deleted = False
+    # Попробуем как username (без @)
+    username = target.lstrip('@')
+    c.execute("DELETE FROM participants WHERE username = ?", (username,))
+    if c.rowcount > 0:
+        deleted = True
+    else:
+        # Попробуем как user_id (цифры)
+        try:
+            user_id = int(target)
+            c.execute("DELETE FROM participants WHERE user_id = ?", (user_id,))
+            if c.rowcount > 0:
+                deleted = True
+        except ValueError:
+            pass
+    conn.commit()
+    conn.close()
+    if deleted:
+        await message.answer(f"✅ Пользователь <code>{target}</code> удалён.", parse_mode="HTML")
+    else:
+        await message.answer(f"❌ Пользователь <code>{target}</code> не найден.", parse_mode="HTML")
+
 if __name__ == "__main__":
     asyncio.run(main())
