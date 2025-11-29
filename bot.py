@@ -104,7 +104,22 @@ async def cmd_start(message: Message):
 @router.message(lambda m: m.text == "🆕 Создать игру")
 async def create_game_handler(message: Message):
     from database import create_game
-    game_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    # 🔒 Проверка: уже есть игра?
+    conn = sqlite3.connect("santa.db")
+    c = conn.cursor()
+    c.execute("SELECT 1 FROM games WHERE creator_id = ?", (message.from_user.id,))
+    if c.fetchone():
+        conn.close()
+        await message.answer(
+            "❌ Вы уже создали игру.\n\n"
+            "Сначала удалите её через кнопку «🗑 Удалить игру», "
+            "если хотите начать заново.",
+            reply_markup=await get_main_kb(message.from_user.id)
+        )
+        return
+    conn.close()
+
+game_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
     create_game(game_code, message.from_user.id)
     await message.answer(
         f"✅ Игра создана! Код для участников:\n\n<b>{game_code}</b>\n\nПоделись этим кодом, чтобы друзья присоединились!",
