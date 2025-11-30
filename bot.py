@@ -121,7 +121,7 @@ async def create_game_handler(message: Message):
 
 game_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 create_game(game_code, message.from_user.id)
-await message.answer(
+    await message.answer(
         f"✅ Игра создана! Код для участников:\n\n<b>{game_code}</b>\n\nПоделись этим кодом, чтобы друзья присоединились!",
         parse_mode="HTML",
         reply_markup=await get_main_kb(message.from_user.id)
