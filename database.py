@@ -135,3 +135,11 @@ def is_draw_done(game_code: str) -> bool:
     result = c.fetchone() is not None
     conn.close()
     return result
+
+def get_all_participants() -> list:
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT user_id FROM participants")
+    user_ids = [row[0] for row in c.fetchall()]
+    conn.close()
+    return user_ids
