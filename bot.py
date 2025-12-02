@@ -333,7 +333,7 @@ async def confirm_delete_game(message: Message):
 
 @router.callback_query(lambda c: c.data.startswith("delgame_yes_"))
 async def handle_delete_game_confirm(callback: types.CallbackQuery):
-    await callback.answer()  # ← обязательно в начале!
+    await callback.answer("игра удалена.")
 
     try:
         # Извлекаем game_code безопасно
@@ -365,7 +365,7 @@ async def handle_delete_game_confirm(callback: types.CallbackQuery):
 async def handle_delete_game_cancel(callback: types.CallbackQuery):
     await callback.answer("отменено.")
     await callback.message.edit_text(
-        "↩️ Удаление отменено.",
+        f"↩️ Удаление отменено.",
         reply_markup=get_main_kb_static()
     )
 
