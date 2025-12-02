@@ -363,7 +363,7 @@ async def handle_delete_game_confirm(callback: types.CallbackQuery):
 
 @router.callback_query(lambda c: c.data == "delgame_cancel")
 async def handle_delete_game_cancel(callback: types.CallbackQuery):
-    await callback.answer(отменено)
+    await callback.answer("отменено.")
     await callback.message.edit_text(
         "↩️ Удаление отменено.",
         reply_markup=get_main_kb_static()
