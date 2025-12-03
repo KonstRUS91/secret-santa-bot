@@ -352,7 +352,7 @@ async def handle_delete_game_confirm(callback: types.CallbackQuery):
         if deleted:
             await callback.message.edit_text(
                 f"✅ Игра <b>{game_code}</b> успешно удалена.",
-                parse_mode="HTML", reply_markup=get_main_kb_static()
+                parse_mode="HTML",
             )
         else:
             await callback.message.edit_text("❌ Игра не найдена.")
