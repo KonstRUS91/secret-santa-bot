@@ -278,7 +278,7 @@ async def send_announcement(message: Message, state: FSMContext):
     conn.close()
 
     if not user_ids:
-        await message.answer("📭 В игре нет участников.")
+        await message.answer("📭 В игре нет участников.", reply_markup=ReplyKeyboardRemove())
         await state.clear()
         return
 
